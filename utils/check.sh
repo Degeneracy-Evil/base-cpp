@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # 只读质量检查：默认智能增量，--staged 检查提交内容，--full 执行全量检查。
+# 支持 --skip-tidy、--skip-build、--skip-test 跳过指定步骤。
 
 set -euo pipefail
 

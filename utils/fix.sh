@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # 显式修复安全的机械问题：尾随空白、EOF 换行和 clang-format。
+# 支持 --full 修复全部文件，默认仅修复工作区变更。
 
 set -euo pipefail
 

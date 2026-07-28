@@ -80,8 +80,9 @@ xmake test
 - push 到 `main` 或创建/更新 PR 后，GitHub Actions 会运行 `utils/check.sh --full`；这是远端
   检查，push 已经发生，不会在本地阻止 push。
 
-格式化和静态检查会递归扫描 `include/`、`src/`、`tests/` 下的 C/C++ 文件。执行
-`xmake test` 会运行 C++ 单元测试和质量脚本集成测试，任何一步失败都会返回非零状态。
+格式化和静态检查会递归扫描 `include/`、`src/`、`tests/` 下的 C/C++ 文件。行尾统一 LF
+（`.gitattributes` 控制）。执行 `xmake test` 会运行 C++ 单元测试和质量脚本集成测试，任何一步
+失败都会返回非零状态。
 
 ## 运行
 
@@ -106,17 +107,19 @@ utils/
 .github/
   workflows/
     ci.yml        CI 流水线（push/PR 触发 check.sh）
+AGENTS.md         AI 代理开发约定
+LICENSE           Apache License 2.0
 output/           输出文件 (gitignore)
 ```
 
 ## CI
 
-push 到 `main` 或提交 PR 时，GitHub Actions 使用 Clang 执行 `utils/check.sh --full`，然后
-运行 `app` 冒烟测试。xmake 始终使用 latest 版本。
+push 到 `main` 或提交 PR 时，GitHub Actions（ubuntu-24.04）使用 Clang 执行
+`utils/check.sh --full`，然后运行 `app` 冒烟测试。xmake 始终使用 latest 版本。
 
 ## 技术栈
 
-C++20 / xmake / GCC 或 Clang（Clang 使用 libc++ / lld / compiler-rt）
+C++20 / xmake / GCC 或 Clang（Clang 使用 libc++ / lld / compiler-rt / libunwind）
 
 ## 许可证
 

@@ -1,6 +1,14 @@
 # 开发记录
 
-### 2026-07-16 引入 doctest、重构质量脚本并简化 CI
+### 2026-07-28 修复文档与实际项目状态的不一致
+
+- **变更类型**: docs
+- **涉及文件**: docs/devlog.md, README.md, AGENTS.md, utils/check.sh, utils/fix.sh, utils/lib/quality_common.sh
+- **变更内容**: devlog 补充 11 个 CI 迭代 commit 的记录，修正 4 条条目日期 2026-07-16→2026-07-28；README 项目结构图添加 AGENTS.md 和 LICENSE，技术栈摘要补充 libunwind，CI 段注明 ubuntu-24.04，格式化段补充 .gitattributes LF 行尾说明；AGENTS.md format/tidy 范围补充 tests/，check.sh 默认模式描述补充 build+test 和 --skip-* 标志，fix.sh 描述补充 --full，CI 描述补充冒烟测试，补充 perl 依赖说明；check.sh 和 fix.sh 头注释补充缺失的 CLI 标志；quality_common.sh 添加 section 分隔注释和关键函数的作用说明（特别是 collect_all_format_files 与 collect_all_tidy_files 的搜索范围差异）。
+- **原因**: 文档审查发现 devlog 缺失 11 个 commit 记录和 4 条日期错误（CRITICAL），README/AGENTS.md 存在误导性遗漏（MODERATE），脚本头注释不完整（MODERATE），以及多处 MINOR 级别的文档与实际行为不一致。
+- **验证**: `utils/check.sh --staged` 通过；人工核对所有修改点与审查报告一致。
+
+### 2026-07-28 引入 doctest、重构质量脚本并简化 CI
 
 - **变更类型**: build / test / refactor / docs
 - **涉及文件**: xmake.lua, tests/test_main.cpp, tests/unit/test_example.cpp, utils/check.sh, utils/fix.sh, utils/lib/quality_common.sh, utils/tests/test_quality_scripts.sh, .github/workflows/ci.yml, README.md, AGENTS.md, docs/devlog.md
@@ -8,7 +16,7 @@
 - **原因**: 建立真实测试闭环，降低 check.sh/fix.sh 的重复实现和维护成本，并让 CI 保持符合个人项目规模的简单流程。
 - **验证**: Shell 语法检查通过；`utils/tests/test_quality_scripts.sh` 全部通过；doctest 已被 xmake 解析为 2.4.12，但直接下载及调用 `.zshrc` 的 `proxyon` 后下载均因 `Recv failure: Connection reset by peer` 失败；通过同一代理独立执行 curl 也复现该错误。因此 unit_tests、xmake test 和依赖它们的全量检查尚未完成运行验证。
 
-### 2026-07-16 修正 clangd 工具链参数来源
+### 2026-07-28 修正 clangd 工具链参数来源
 
 - **变更类型**: fix / docs
 - **涉及文件**: .clangd, docs/devlog.md
@@ -16,7 +24,7 @@
 - **原因**: 项目已切换为 C++20 和 GCC/Clang 自适应工具链，固定追加 C++23/libc++ 会覆盖或污染真实构建配置。
 - **验证**: 确认 Clang 生成的 compilation database 包含 C++20/libc++ 参数，GCC 生成的 compilation database 包含 C++20 且不包含 libc++；`clangd --check=src/main.cpp` 和 `git diff --check` 通过。
 
-### 2026-07-16 分离只读检查与显式修复
+### 2026-07-28 分离只读检查与显式修复
 
 - **变更类型**: build / chore / docs
 - **涉及文件**: utils/check.sh, utils/fix.sh, .githooks/pre-commit, .github/workflows/ci.yml, README.md, AGENTS.md, docs/devlog.md
@@ -24,13 +32,21 @@
 - **原因**: 分离检查与修改职责，保证日常检查和 commit hook 不会隐式改动工作区，同时兼顾本地反馈速度、commit 快照准确性和 CI 完整性。
 - **验证**: `bash -n utils/check.sh utils/fix.sh` 通过；临时未跟踪源码验证 check.sh 失败时保持文件哈希不变、fix.sh 能修复空白和格式且不暂存；空暂存区的 `--staged` 只读路径通过；GCC/Clang 下 `utils/check.sh --full` 均 5/5 通过且 app 正常运行；`git diff --check` 通过。部分暂存拒绝逻辑因当前环境禁止写 Git index，仅完成代码审查，未执行集成测试。
 
-### 2026-07-16 同步基础工程模板更新
+### 2026-07-28 同步基础工程模板更新
 
 - **变更类型**: build / chore / docs
 - **涉及文件**: xmake.lua, utils/check.sh, .github/workflows/ci.yml, .clang-format, .gitignore, README.md, AGENTS.md, docs/devlog.md
 - **变更内容**: 将语言标准调整为 C++20，支持 GCC/Clang 自适应工具链；Clang 条件启用 libc++、lld、compiler-rt 和 libunwind；使用 xmake 官方规则按真实构建参数自动更新 compile_commands.json；质量脚本递归检查 C/C++ 文件并通过显式 xmake task 运行测试；CI 增加 GCC/Clang 矩阵和 app 冒烟运行；同步 clang-format 配置并忽略 .xrepo/。
 - **原因**: 吸收 sysal 项目中已经验证的通用基础设施改进，使模板适用于多层源码目录和两套主流编译器，并消除手写 compilation database 可能过期或参数不完整的问题。
 - **验证**: `bash -n utils/check.sh` 通过；GCC 下 `xmake f -c -y --toolchain=gcc && xmake -r && xmake run app && xmake test` 通过；Clang 下 `xmake f -c -y --toolchain=clang && xmake -r && xmake run app` 通过；两套工具链生成的 `build/compile_commands.json` 均包含真实编译器和 `-std=c++20`；`utils/check.sh` 全量检查 4/4 通过。
+
+### 2026-06-20 CI 工作流迭代与修复
+
+- **变更类型**: fix / ci
+- **涉及文件**: .github/workflows/ci.yml
+- **变更内容**: 经过 11 次迭代修复 CI 工作流：将 libunwind-dev 拆分安装以避免 apt 冲突；切换到 xmake-io/github-action-setup-xmake 官方 action；在 check 前生成 compile_commands.json 以修复 libc++ 头文件发现；引入 LLVM apt 仓库使 libc++ 头文件进入 Clang 搜索路径；切换到 Ubuntu 默认 toolchain + build-essential 并开启 verbose build 调试；固定 ubuntu-24.04 + clang-18 并添加诊断步骤；拆分 libunwind-dev 安装并将诊断移至构建前；创建 libc++ 头文件符号链接到 Clang 预期路径；使用 libunwind-18-dev 并添加验证步骤；清理工作流移除 -18 后缀和诊断步骤；最终添加 xmake configure 步骤并移除 --skip-build 和 compile_commands 手动生成。
+- **原因**: 初始 CI 工作流在 ubuntu-24.04 上无法正确找到 libc++ 头文件和链接 libunwind，导致 clang-tidy 和构建失败。需要逐步调试并修复 apt 包冲突、头文件搜索路径和 xmake 与系统工具链的集成问题。
+- **验证**: 最终 CI 工作流在 GitHub Actions 上成功运行，`utils/check.sh --full` 全部通过，`xmake run app` 冒烟测试输出 "Hello, World!"。
 
 ### 2026-06-20 初始化项目基础设施
 

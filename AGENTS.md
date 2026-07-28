@@ -47,19 +47,21 @@ output/           输出文件 (gitignore)
 - 编译选项 -Wall -Wextra -Werror，零 warning
 - clang-tidy `WarningsAsErrors: '*'`，静态分析零容忍
 - `<cctype>` 函数传参必须 `static_cast<unsigned char>()`，否则 signed char 有 UB
+- fix.sh 依赖 perl 修复尾随空白
 - `compile_commands.json` 由 xmake 的 `plugin.compile_commands.autoupdate` 规则自动更新
-- clang-format / clang-tidy 递归检查 `include/`、`src/` 下的 C/C++ 文件
+- clang-format / clang-tidy 递归检查 `include/`、`src/`、`tests/` 下的 C/C++ 文件
 - C++ 单元测试使用 doctest，源码放在 `tests/unit/`，统一构建为 `unit_tests` target
 - `xmake test` 依次运行 doctest 单元测试和 `utils/tests/test_quality_scripts.sh`
 - 行尾统一 LF（`.gitattributes` 控制）
 - pre-commit hook 转发到 `utils/check.sh --staged`；首次 `xmake build` 自动配置 `core.hooksPath`
-- `utils/check.sh` 始终只读；默认智能增量检查工作区变更，`--staged` 只检查 commit 暂存内容，
-  `--full` 执行全量 format / tidy / rebuild / test
+- `utils/check.sh` 始终只读；默认智能增量检查工作区变更并执行增量 build + 全部 test，
+  `--staged` 只读检查 commit 暂存内容（不构建、不测试、不修复），`--full` 执行全量
+  format / tidy / rebuild / test；支持 `--skip-tidy`、`--skip-build`、`--skip-test`
 - `.clang-format` 变化触发全量 format；`.clang-tidy`、xmake.lua 或公共头文件变化触发全量 tidy
 - `utils/fix.sh` 仅修复尾随空白、EOF 换行和 clang-format，不运行 tidy/build/test，不执行
-  `git add`；修复后人工复查和暂存
+  `git add`；修复后人工复查和暂存；支持 `--full` 修复全部文件
 - 部分暂存文件不能进入 `--staged` 检查，必须先处理暂存与未暂存修改
-- 项目未配置 pre-push hook；push 后由 GitHub Actions 执行 `utils/check.sh --full`
+- 项目未配置 pre-push hook；push 后由 GitHub Actions 执行 `utils/check.sh --full` 并运行 app 冒烟测试
 - CI 只使用 Clang，不设置编译器矩阵；xmake 使用 latest，避免在 CI 中重复单独构建
 
 ## 开发记录规则
