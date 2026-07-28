@@ -1,5 +1,37 @@
 # 开发记录
 
+### 2026-07-16 引入 doctest、重构质量脚本并简化 CI
+
+- **变更类型**: build / test / refactor / docs
+- **涉及文件**: xmake.lua, tests/test_main.cpp, tests/unit/test_example.cpp, utils/check.sh, utils/fix.sh, utils/lib/quality_common.sh, utils/tests/test_quality_scripts.sh, .github/workflows/ci.yml, README.md, AGENTS.md, docs/devlog.md
+- **变更内容**: 通过 xmake/xrepo 引入 doctest，新增 unit_tests target 和真实示例测试；xmake test 统一运行 C++ 单元测试与质量脚本集成测试；抽取 quality_common.sh 复用 Git 文件收集和文件类型判断，format/tidy 扩展覆盖 tests；集成测试在临时 Git 仓库中验证只读检查、显式修复、空格路径、暂存/部分暂存和智能全量升级；CI 简化为单一 Clang 流程，移除编译器矩阵和重复 Build 步骤，保留 latest xmake。
+- **原因**: 建立真实测试闭环，降低 check.sh/fix.sh 的重复实现和维护成本，并让 CI 保持符合个人项目规模的简单流程。
+- **验证**: Shell 语法检查通过；`utils/tests/test_quality_scripts.sh` 全部通过；doctest 已被 xmake 解析为 2.4.12，但直接下载及调用 `.zshrc` 的 `proxyon` 后下载均因 `Recv failure: Connection reset by peer` 失败；通过同一代理独立执行 curl 也复现该错误。因此 unit_tests、xmake test 和依赖它们的全量检查尚未完成运行验证。
+
+### 2026-07-16 修正 clangd 工具链参数来源
+
+- **变更类型**: fix / docs
+- **涉及文件**: .clangd, docs/devlog.md
+- **变更内容**: 移除 `.clangd` 中硬编码的 `-std=c++23` 和 `-stdlib=libc++`，仅保留 `build/compile_commands.json` 作为编译参数来源。
+- **原因**: 项目已切换为 C++20 和 GCC/Clang 自适应工具链，固定追加 C++23/libc++ 会覆盖或污染真实构建配置。
+- **验证**: 确认 Clang 生成的 compilation database 包含 C++20/libc++ 参数，GCC 生成的 compilation database 包含 C++20 且不包含 libc++；`clangd --check=src/main.cpp` 和 `git diff --check` 通过。
+
+### 2026-07-16 分离只读检查与显式修复
+
+- **变更类型**: build / chore / docs
+- **涉及文件**: utils/check.sh, utils/fix.sh, .githooks/pre-commit, .github/workflows/ci.yml, README.md, AGENTS.md, docs/devlog.md
+- **变更内容**: 将 check.sh 重构为只读的默认智能增量、`--staged` 和 `--full` 三种模式；配置或公共头文件变化时自动扩大 format/tidy 范围；新增 fix.sh，独立修复尾随空白、EOF 换行和 clang-format，且不自动暂存；pre-commit 改为检查暂存内容，CI 保持全量检查；不同失败类型输出针对性处理建议。
+- **原因**: 分离检查与修改职责，保证日常检查和 commit hook 不会隐式改动工作区，同时兼顾本地反馈速度、commit 快照准确性和 CI 完整性。
+- **验证**: `bash -n utils/check.sh utils/fix.sh` 通过；临时未跟踪源码验证 check.sh 失败时保持文件哈希不变、fix.sh 能修复空白和格式且不暂存；空暂存区的 `--staged` 只读路径通过；GCC/Clang 下 `utils/check.sh --full` 均 5/5 通过且 app 正常运行；`git diff --check` 通过。部分暂存拒绝逻辑因当前环境禁止写 Git index，仅完成代码审查，未执行集成测试。
+
+### 2026-07-16 同步基础工程模板更新
+
+- **变更类型**: build / chore / docs
+- **涉及文件**: xmake.lua, utils/check.sh, .github/workflows/ci.yml, .clang-format, .gitignore, README.md, AGENTS.md, docs/devlog.md
+- **变更内容**: 将语言标准调整为 C++20，支持 GCC/Clang 自适应工具链；Clang 条件启用 libc++、lld、compiler-rt 和 libunwind；使用 xmake 官方规则按真实构建参数自动更新 compile_commands.json；质量脚本递归检查 C/C++ 文件并通过显式 xmake task 运行测试；CI 增加 GCC/Clang 矩阵和 app 冒烟运行；同步 clang-format 配置并忽略 .xrepo/。
+- **原因**: 吸收 sysal 项目中已经验证的通用基础设施改进，使模板适用于多层源码目录和两套主流编译器，并消除手写 compilation database 可能过期或参数不完整的问题。
+- **验证**: `bash -n utils/check.sh` 通过；GCC 下 `xmake f -c -y --toolchain=gcc && xmake -r && xmake run app && xmake test` 通过；Clang 下 `xmake f -c -y --toolchain=clang && xmake -r && xmake run app` 通过；两套工具链生成的 `build/compile_commands.json` 均包含真实编译器和 `-std=c++20`；`utils/check.sh` 全量检查 4/4 通过。
+
 ### 2026-06-20 初始化项目基础设施
 
 - **变更类型**: chore / build / docs

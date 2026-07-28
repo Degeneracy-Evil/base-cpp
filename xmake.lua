@@ -1,14 +1,26 @@
-set_languages("c++23")
-set_toolchains("clang")
+set_languages("c++20")
 set_rundir(".")
+add_rules("plugin.compile_commands.autoupdate", {outputdir = "build"})
+add_requires("doctest")
+
+local function configure_toolchain(target)
+    local compiler = target:tool("cxx")
+    if compiler and compiler:find("clang", 1, true) then
+        target:add("cxxflags", "-stdlib=libc++", {force = true})
+        target:add("ldflags", "-stdlib=libc++", "-fuse-ld=lld", "-rtlib=compiler-rt",
+                   "-unwindlib=libunwind", {force = true})
+    end
+end
 
 target("app")
     set_kind("binary")
-    add_files("src/*.cpp")
+    add_files("src/**.cpp")
     add_includedirs("include")
-    add_cxxflags("-Wall", "-Wextra", "-Werror", "-stdlib=libc++", {force = true})
-    add_ldflags("-stdlib=libc++", "-fuse-ld=lld", "-rtlib=compiler-rt", "-unwindlib=libunwind",
-               {force = true})
+    add_cxxflags("-Wall", "-Wextra", "-Werror", {force = true})
+
+    on_config(function (target)
+        configure_toolchain(target)
+    end)
 
     on_load(function (target)
         if os.isdir(".githooks") and os.isdir(".git") then
@@ -19,20 +31,26 @@ target("app")
         end
     end)
 
-    after_build(function (target)
-        local cc_file = path.join(os.projectdir(), "build", "compile_commands.json")
-        if not os.isfile(cc_file) then
-            local project_dir = os.projectdir()
-            local entries = {}
-            for _, sourcefile in ipairs(target:sourcefiles()) do
-                local abs_source = path.absolute(sourcefile, project_dir)
-                local cmd = "clang++ -std=c++23 -Wall -Wextra -Werror -stdlib=libc++ -Iinclude -c " .. abs_source
-                table.insert(entries, string.format(
-                    '{"directory":"%s","command":"%s","file":"%s"}',
-                    project_dir, cmd, abs_source
-                ))
-            end
-            local json = "[" .. table.concat(entries, ",") .. "]"
-            io.writefile(cc_file, json)
-        end
+target("unit_tests")
+    set_kind("binary")
+    set_default(false)
+    add_files("tests/test_main.cpp", "tests/unit/**.cpp")
+    add_includedirs("include")
+    add_packages("doctest")
+    add_cxxflags("-Wall", "-Wextra", "-Werror", "-UNDEBUG", {force = true})
+
+    on_config(function (target)
+        configure_toolchain(target)
     end)
+
+task("test")
+    set_category("plugin")
+    on_run(function ()
+        os.execv("xmake", {"run", "unit_tests"})
+        os.execv("bash", {"utils/tests/test_quality_scripts.sh"})
+    end)
+    set_menu {
+        usage = "xmake test",
+        description = "Run unit tests and quality script integration tests",
+        options = {}
+    }

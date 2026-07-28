@@ -9,7 +9,8 @@ xmake build          # 构建
 xmake -r             # 重新构建
 ```
 
-`compile_commands.json` 在构建后自动生成到 `build/`（供 clang-tidy / clangd 使用），无需手动运行。
+`compile_commands.json` 由 xmake 根据真实构建参数自动更新到 `build/`（供 clang-tidy / clangd
+使用），无需手动运行。
 
 ## 运行
 
@@ -27,9 +28,12 @@ src/              源文件
 tests/            测试样例
 docs/             文档
 utils/
-  check.sh        一键检查（clang-format + clang-tidy + build + tests）
+  check.sh        只读检查（默认智能增量；--staged = pre-commit；--full = CI）
+  fix.sh          显式修复空白、EOF 换行和 clang-format，不自动暂存
+  lib/            质量脚本共享实现
+  tests/          使用临时 Git 仓库验证质量脚本
 .githooks/
-  pre-commit      转发到 check.sh --hook
+  pre-commit      转发到 check.sh --staged
 .github/
   workflows/
     ci.yml        CI 流水线（push/PR 触发 check.sh）
@@ -38,13 +42,25 @@ output/           输出文件 (gitignore)
 
 ## 关键约定
 
-- C++23 / xmake / clang++ / libc++ / lld / compiler-rt
+- C++20 / xmake / GCC 或 Clang 自适应工具链
+- GCC 使用系统默认标准库和链接器；Clang 使用 libc++ / lld / compiler-rt / libunwind
 - 编译选项 -Wall -Wextra -Werror，零 warning
 - clang-tidy `WarningsAsErrors: '*'`，静态分析零容忍
 - `<cctype>` 函数传参必须 `static_cast<unsigned char>()`，否则 signed char 有 UB
-- `compile_commands.json` 由 `after_build` 钩子自动生成，`xmake -r` 后也会重新生成
+- `compile_commands.json` 由 xmake 的 `plugin.compile_commands.autoupdate` 规则自动更新
+- clang-format / clang-tidy 递归检查 `include/`、`src/` 下的 C/C++ 文件
+- C++ 单元测试使用 doctest，源码放在 `tests/unit/`，统一构建为 `unit_tests` target
+- `xmake test` 依次运行 doctest 单元测试和 `utils/tests/test_quality_scripts.sh`
 - 行尾统一 LF（`.gitattributes` 控制）
-- pre-commit hook 通过 `.githooks/pre-commit` 转发到 `utils/check.sh --hook`；首次 `xmake build` 自动配置 `core.hooksPath`
+- pre-commit hook 转发到 `utils/check.sh --staged`；首次 `xmake build` 自动配置 `core.hooksPath`
+- `utils/check.sh` 始终只读；默认智能增量检查工作区变更，`--staged` 只检查 commit 暂存内容，
+  `--full` 执行全量 format / tidy / rebuild / test
+- `.clang-format` 变化触发全量 format；`.clang-tidy`、xmake.lua 或公共头文件变化触发全量 tidy
+- `utils/fix.sh` 仅修复尾随空白、EOF 换行和 clang-format，不运行 tidy/build/test，不执行
+  `git add`；修复后人工复查和暂存
+- 部分暂存文件不能进入 `--staged` 检查，必须先处理暂存与未暂存修改
+- 项目未配置 pre-push hook；push 后由 GitHub Actions 执行 `utils/check.sh --full`
+- CI 只使用 Clang，不设置编译器矩阵；xmake 使用 latest，避免在 CI 中重复单独构建
 
 ## 开发记录规则
 
