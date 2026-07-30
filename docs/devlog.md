@@ -1,5 +1,13 @@
 # 开发记录
 
+### 2026-07-29 简化质量检查：合并 check/fix 为 xmake check，pre-commit 自动修复
+
+- **变更类型**: refactor / chore / docs
+- **涉及文件**: xmake.lua, .githooks/pre-commit, .github/workflows/ci.yml, README.md, AGENTS.md, docs/devlog.md, utils/ (deleted)
+- **变更内容**: 将 utils/check.sh + utils/fix.sh + utils/lib/quality_common.sh + utils/tests/ 合并为 xmake check task（全量 format+tidy+rebuild+test）；pre-commit 从只读检查改为自动修复（format+空白+git add）；删除增量/暂存/skip 模式；CI 简化为 xmake check；Clang 设为默认工具链（set_toolchains("clang", "gcc")）；用 sed 替代 perl 修复空白；删除 utils/ 目录。
+- **原因**: 个人脚手架质量检查过于复杂（3 模式+3 skip+4 脚本 494 行），日常使用摩擦大。简化为 xmake check 一条命令 + git commit 自动修复，覆盖 90% 使用场景。
+- **验证**: xmake build 通过、xmake test 通过、xmake check 通过、pre-commit hook 自动修复验证通过
+
 ### 2026-07-28 修复文档与实际项目状态的不一致
 
 - **变更类型**: docs
