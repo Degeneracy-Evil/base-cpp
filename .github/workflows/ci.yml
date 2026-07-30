@@ -29,7 +29,7 @@ jobs:
         run: xmake f -c -y --toolchain=clang
 
       - name: Run quality checks
-        run: utils/check.sh --full
+        run: xmake check
 
       - name: Run app
         run: xmake run app
