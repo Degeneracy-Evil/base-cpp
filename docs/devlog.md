@@ -1,5 +1,13 @@
 # 开发记录
 
+### 2026-07-30 添加 VERSION 文件为版本唯一真相源
+
+- **变更类型**: src / build / docs
+- **涉及文件**: VERSION, xmake.lua, README.md, AGENTS.md, docs/devlog.md
+- **变更内容**: 新增 VERSION 文件（0.1.0）为版本唯一真相源；xmake check 版本校验改为三方比对（VERSION vs xmake.lua vs version.hpp）；更新文档说明版本同步约定。
+- **原因**: VERSION 文件是最通用、最简单的版本定义方式，任何工具和人都能直接读取。xmake.lua 和 version.hpp 需手动同步，xmake check 在 CI 中自动校验。
+- **验证**: xmake check 通过（含版本三方校验步骤）
+
 ### 2026-07-30 简化版本校验及调整格式配置
 
 - **变更类型**: fix / chore
