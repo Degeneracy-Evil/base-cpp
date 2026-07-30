@@ -61,24 +61,28 @@ task("check")
     on_run(function ()
         local fmt_cmd = "find include src tests -type f \\( -name '*.h' -o -name '*.hpp' -o -name '*.c' -o -name '*.cpp' \\) -print0 2>/dev/null | xargs -0 clang-format -i"
         local tidy_cmd = "find src tests -type f \\( -name '*.c' -o -name '*.cpp' \\) -print0 2>/dev/null | xargs -0 clang-tidy -p=build"
+        local ver_cmd = "hpp=$(awk '/^#define PROJECT_VERSION_MAJOR/{m=$3} /^#define PROJECT_VERSION_MINOR/{n=$3} /^#define PROJECT_VERSION_PATCH/{p=$3} END{print m\".\"n\".\"p}' include/version.hpp) && xmake_ver=$(xmake show --json | python3 -c \"import sys,json; print(json.load(sys.stdin)['project']['version'])\") && test \"$hpp\" = \"$xmake_ver\" || { echo \"version mismatch: version.hpp=$hpp xmake.lua=$xmake_ver\" >&2; exit 1; }"
 
-        print("[1/4] clang-format...")
+        print("[1/5] version consistency...")
+        os.execv("bash", {"-c", ver_cmd})
+
+        print("[2/5] clang-format...")
         os.execv("bash", {"-c", fmt_cmd})
 
-        print("[2/4] clang-tidy...")
+        print("[3/5] clang-tidy...")
         os.execv("xmake", {"project", "-k", "compile_commands", "build"})
         os.execv("bash", {"-c", tidy_cmd})
 
-        print("[3/4] rebuild...")
+        print("[4/5] rebuild...")
         os.execv("xmake", {"-r"})
 
-        print("[4/4] test...")
+        print("[5/5] test...")
         os.execv("xmake", {"test"})
 
         print("\nAll checks passed.")
     end)
     set_menu {
         usage = "xmake check",
-        description = "Full quality check: format + tidy + rebuild + test",
+        description = "Full quality check: version + format + tidy + rebuild + test",
         options = {}
     }
