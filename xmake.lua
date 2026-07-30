@@ -26,7 +26,7 @@ target("app")
 
     on_load(function (target)
         if os.isdir(".githooks") and (os.isdir(".git") or os.isfile(".git")) then
-            local configured = try { function() os.runv("git", {"config", "core.hooksPath"}); return true end }
+            local configured = try { function() os.execv("git", {"config", "core.hooksPath"}); return true end }
             if not configured then
                 os.runv("git", {"config", "core.hooksPath", ".githooks"})
             end
