@@ -1,5 +1,13 @@
 # 开发记录
 
+### 2026-07-30 添加 version.hpp 及版本一致性校验
+
+- **变更类型**: src / build
+- **涉及文件**: include/version.hpp, xmake.lua, docs/devlog.md
+- **变更内容**: 新增 include/version.hpp 定义 PROJECT_VERSION_MAJOR/MINOR/PATCH 宏及 PROJECT_VERSION 字符串宏（预处理器 stringify 自动拼接）；xmake check 新增 [1/5] 版本一致性校验步骤，从 version.hpp 提取版本号与 xmake.lua set_version() 比对，不一致则报错退出。
+- **原因**: 版本号散落在多处容易遗漏同步。version.hpp 为唯一真相源（C++ 代码直接 #include），xmake.lua 保留 set_version 供 xmake 打包/安装使用，xmake check 在 CI 和发布前自动校验两者一致。
+- **验证**: xmake build 通过、xmake test 通过、xmake check 通过（含版本校验步骤）；故意制造 mismatch 后 xmake check 正确报错
+
 ### 2026-07-29 修复 hooksPath 配置 bug 及扫描遗留问题
 
 - **变更类型**: fix / chore / docs

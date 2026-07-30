@@ -24,6 +24,7 @@ xmake.lua 中已设置 `set_rundir(".")`，xmake run 从项目根目录执行，
 
 ```
 include/          头文件
+  version.hpp    版本定义（PROJECT_VERSION_MAJOR/MINOR/PATCH）
 src/              源文件
 tests/            测试样例
 docs/             文档
@@ -49,7 +50,8 @@ output/           输出文件 (gitignore)
 - C++ 单元测试使用 doctest，源码放在 `tests/unit/`，统一构建为 `unit_tests` target
 - `xmake test` 运行 doctest 单元测试
 - 行尾统一 LF（`.gitattributes` 控制）
-- `xmake check` 运行全量质量检查（format + tidy + rebuild + test）
+- `xmake check` 运行全量质量检查（version consistency + format + tidy + rebuild + test）
+- 版本号单一真相源为 `include/version.hpp`，xmake.lua 的 `set_version` 需与之保持一致，`xmake check` 自动校验
 - pre-commit hook 自动修复格式 + 尾随空白并重新暂存，不阻塞提交；首次 `xmake build` 自动配置 `core.hooksPath`
 - 项目未配置 pre-push hook；push 后由 GitHub Actions 执行 `xmake check` 并运行 `xmake run app` 冒烟测试
 - CI 只使用 Clang，不设置编译器矩阵；xmake 使用 latest，避免在 CI 中重复单独构建
