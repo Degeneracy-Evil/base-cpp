@@ -32,6 +32,8 @@ docs/             文档
 .github/
   workflows/
     ci.yml        CI 流水线（push/PR 触发 xmake check）
+AGENTS.md         AI 代理开发约定
+LICENSE           Apache License 2.0
 output/           输出文件 (gitignore)
 ```
 

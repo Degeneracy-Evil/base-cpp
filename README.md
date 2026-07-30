@@ -8,8 +8,8 @@
 |------|---------|------|
 | Clang（默认）或 GCC | Clang 12 / GCC 10 | 支持 C++20 的编译器 |
 | xmake | 2.8 | 构建系统 |
-| lld | — | Clang 使用的链接器 |
-| libc++ | — | Clang 使用的 C++ 标准库 |
+| lld | — | Clang 使用的链接器（仅 Clang） |
+| libc++ | — | Clang 使用的 C++ 标准库（仅 Clang） |
 | clang-format | — | 代码格式化（随 clang 提供） |
 | clang-tidy | — | 静态分析（随 clang 提供） |
 

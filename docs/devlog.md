@@ -1,5 +1,13 @@
 # 开发记录
 
+### 2026-07-29 修复 hooksPath 配置 bug 及扫描遗留问题
+
+- **变更类型**: fix / chore / docs
+- **涉及文件**: xmake.lua, .clang-tidy, AGENTS.md, README.md, docs/devlog.md, tests/.gitkeep (deleted)
+- **变更内容**: 修复 xmake.lua on_load hook 中 os.runv 不对非零退出码 raise 的 bug（改为 os.execv，确保 hooksPath 未设置时能正确配置）；删除冗余的 tests/.gitkeep（tests/ 已有跟踪内容）；.clang-tidy HeaderFilterRegex 补 .h 匹配；AGENTS.md 项目结构补 AGENTS.md 和 LICENSE；README.md 前置条件表 lld/libc++ 标注"仅 Clang"。
+- **原因**: 全面扫描发现 on_load hook 中 os.runv 导致 hooksPath 永远不会被设置（Lua 中非零退出码是 truthy，try 不会捕获）；tests/.gitkeep 在目录已有内容后冗余；HeaderFilterRegex 遗漏 .h 头文件；文档结构图和前置条件表存在不一致。
+- **验证**: xmake build 通过（构建时自动配置 core.hooksPath）、xmake test 通过、xmake check 通过
+
 ### 2026-07-29 简化质量检查：合并 check/fix 为 xmake check，pre-commit 自动修复
 
 - **变更类型**: refactor / chore / docs
