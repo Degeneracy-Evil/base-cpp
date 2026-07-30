@@ -1,5 +1,13 @@
 # 开发记录
 
+### 2026-07-30 调整 clang 配置文件
+
+- **变更类型**: chore / docs
+- **涉及文件**: .clang-format, .clang-tidy, .clangd, docs/devlog.md
+- **变更内容**: .clang-format 新增 AllowShortFunctionsOnASingleLine: Empty、AllowShortIfStatementsOnASingleLine: Never、AllowShortLoopsOnASingleLine: false、NamespaceIndentation: All；.clang-tidy 新增 modernize-use-using、modernize-redundant-void-arg、modernize-loop-convert、readability-const-return-type；.clangd 新增 Diagnostics（UnusedIncludes: Strict + Suppress pp_file_not_found）、InlayHints（ParameterNames + DeducedTypes）、Index（Background: Build）。
+- **原因**: 补充保守但实用的配置，减少常见 bug 源（单行 if/loop）、提升 IDE 辅助（内联提示、未使用 include 检测）。
+- **验证**: xmake check 通过
+
 ### 2026-07-30 简化版本管理：仅保留 version.hpp
 
 - **变更类型**: refactor / docs

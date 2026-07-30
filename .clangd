@@ -1,2 +1,15 @@
 CompileFlags:
   CompilationDatabase: build
+
+Diagnostics:
+  UnusedIncludes: Strict
+  Suppress:
+    - pp_file_not_found
+
+InlayHints:
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes
+
+Index:
+  Background: Build

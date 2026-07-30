@@ -10,3 +10,7 @@ SortIncludes: true
 SpaceBeforeParens: Never
 TabWidth: 4
 UseTab: Never
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+NamespaceIndentation: All
