@@ -1,5 +1,13 @@
 # 开发记录
 
+### 2026-07-30 简化版本管理：仅保留 version.hpp
+
+- **变更类型**: refactor / docs
+- **涉及文件**: VERSION (deleted), xmake.lua, README.md, AGENTS.md, docs/devlog.md
+- **变更内容**: 删除 VERSION 文件；移除 xmake.lua 中 set_version 和版本校验步骤；xmake check 恢复为 4 步（format+tidy+rebuild+test）；版本号仅定义在 include/version.hpp。
+- **原因**: xmake 描述域沙箱无法读取文件，版本同步逻辑过于复杂。简化为 version.hpp 单一定义，不再在 xmake.lua 中设置版本。
+- **验证**: xmake check 通过
+
 ### 2026-07-30 添加 VERSION 文件为版本唯一真相源
 
 - **变更类型**: src / build / docs

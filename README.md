@@ -40,11 +40,8 @@ xmake check       # 全量 format + tidy + rebuild + test（发布前 / CI）
 日常开发只需 `git commit`，pre-commit hook 会自动对暂存文件运行 clang-format 并清理尾随
 空白和 EOF 换行，修复后自动重新暂存，整个过程无感。
 
-发布前或 CI 中执行 `xmake check`，依次校验版本一致性（VERSION vs xmake.lua vs version.hpp）、
-clang-format、clang-tidy、`xmake -r` 和 `xmake test`，任何一步失败都会返回非零状态。
-
-版本号单一真相源为 `VERSION` 文件，`xmake.lua` 的 `set_version` 和 `include/version.hpp`
-需与之保持一致。
+发布前或 CI 中执行 `xmake check`，依次运行 clang-format、clang-tidy、`xmake -r` 和
+`xmake test`，任何一步失败都会返回非零状态。
 
 格式化和静态检查递归扫描 `include/`、`src/`、`tests/` 下的 C/C++ 文件。行尾统一 LF
 （`.gitattributes` 控制）。
@@ -62,25 +59,6 @@ xmake test
 
 ```bash
 xmake run app
-```
-
-## 项目结构
-
-```
-include/          头文件
-  version.hpp    版本定义（PROJECT_VERSION_MAJOR/MINOR/PATCH）
-src/              源文件
-tests/            测试样例
-docs/             文档
-VERSION           版本号（唯一真相源）
-.githooks/
-  pre-commit      自动修复格式 + 尾随空白并重新暂存
-.github/
-  workflows/
-    ci.yml        CI 流水线（push/PR 触发 xmake check）
-AGENTS.md         AI 代理开发约定
-LICENSE           Apache License 2.0
-output/           输出文件 (gitignore)
 ```
 
 ## CI

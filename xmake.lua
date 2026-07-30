@@ -1,6 +1,5 @@
 set_languages("c++20")
 set_rundir(".")
-set_version("0.1.0")
 set_toolchains("clang", "gcc")
 add_rules("plugin.compile_commands.autoupdate", {outputdir = "build"})
 add_requires("doctest 2.4.12")
@@ -61,28 +60,24 @@ task("check")
     on_run(function ()
         local fmt_cmd = "find include src tests -type f \\( -name '*.h' -o -name '*.hpp' -o -name '*.c' -o -name '*.cpp' \\) -print0 2>/dev/null | xargs -0 clang-format -i"
         local tidy_cmd = "find src tests -type f \\( -name '*.c' -o -name '*.cpp' \\) -print0 2>/dev/null | xargs -0 clang-tidy -p=build"
-        local ver_cmd = "v=$(head -1 VERSION) && lua=$(sed -n 's/.*set_version(\"\\([^\"]*\\)\").*/\\1/p' xmake.lua) && hpp=$(awk '/^#define PROJECT_VERSION_MAJOR/{m=$3} /^#define PROJECT_VERSION_MINOR/{n=$3} /^#define PROJECT_VERSION_PATCH/{p=$3} END{print m\".\"n\".\"p}' include/version.hpp) && test \"$v\" = \"$lua\" && test \"$v\" = \"$hpp\" || { echo \"version mismatch: VERSION=$v xmake.lua=$lua version.hpp=$hpp\" >&2; exit 1; }"
 
-        print("[1/5] version consistency...")
-        os.execv("bash", {"-c", ver_cmd})
-
-        print("[2/5] clang-format...")
+        print("[1/4] clang-format...")
         os.execv("bash", {"-c", fmt_cmd})
 
-        print("[3/5] clang-tidy...")
+        print("[2/4] clang-tidy...")
         os.execv("xmake", {"project", "-k", "compile_commands", "build"})
         os.execv("bash", {"-c", tidy_cmd})
 
-        print("[4/5] rebuild...")
+        print("[3/4] rebuild...")
         os.execv("xmake", {"-r"})
 
-        print("[5/5] test...")
+        print("[4/4] test...")
         os.execv("xmake", {"test"})
 
         print("\nAll checks passed.")
     end)
     set_menu {
         usage = "xmake check",
-        description = "Full quality check: version + format + tidy + rebuild + test",
+        description = "Full quality check: format + tidy + rebuild + test",
         options = {}
     }
