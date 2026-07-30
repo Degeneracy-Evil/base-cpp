@@ -1,5 +1,13 @@
 # 开发记录
 
+### 2026-07-30 简化版本校验及调整格式配置
+
+- **变更类型**: fix / chore
+- **涉及文件**: xmake.lua, .clang-format, docs/devlog.md
+- **变更内容**: 版本校验去掉 python3 依赖，改为 sed 直接从 xmake.lua 提取 set_version；PointerAlignment 改为 Right；ColumnLimit 改为 120。
+- **原因**: 原 awk+python3+json 校验命令过于复杂且引入不必要的 python3 依赖；sed 读 xmake.lua 更简单直接。格式偏好调整。
+- **验证**: xmake check 通过（含版本校验步骤）
+
 ### 2026-07-30 添加 version.hpp 及版本一致性校验
 
 - **变更类型**: src / build

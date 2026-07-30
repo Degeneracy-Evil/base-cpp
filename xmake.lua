@@ -61,7 +61,7 @@ task("check")
     on_run(function ()
         local fmt_cmd = "find include src tests -type f \\( -name '*.h' -o -name '*.hpp' -o -name '*.c' -o -name '*.cpp' \\) -print0 2>/dev/null | xargs -0 clang-format -i"
         local tidy_cmd = "find src tests -type f \\( -name '*.c' -o -name '*.cpp' \\) -print0 2>/dev/null | xargs -0 clang-tidy -p=build"
-        local ver_cmd = "hpp=$(awk '/^#define PROJECT_VERSION_MAJOR/{m=$3} /^#define PROJECT_VERSION_MINOR/{n=$3} /^#define PROJECT_VERSION_PATCH/{p=$3} END{print m\".\"n\".\"p}' include/version.hpp) && xmake_ver=$(xmake show --json | python3 -c \"import sys,json; print(json.load(sys.stdin)['project']['version'])\") && test \"$hpp\" = \"$xmake_ver\" || { echo \"version mismatch: version.hpp=$hpp xmake.lua=$xmake_ver\" >&2; exit 1; }"
+        local ver_cmd = "hpp=$(awk '/^#define PROJECT_VERSION_MAJOR/{m=$3} /^#define PROJECT_VERSION_MINOR/{n=$3} /^#define PROJECT_VERSION_PATCH/{p=$3} END{print m\".\"n\".\"p}' include/version.hpp) && lua=$(sed -n 's/.*set_version(\"\\([^\"]*\\)\").*/\\1/p' xmake.lua) && test \"$hpp\" = \"$lua\" || { echo \"version mismatch: version.hpp=$hpp xmake.lua=$lua\" >&2; exit 1; }"
 
         print("[1/5] version consistency...")
         os.execv("bash", {"-c", ver_cmd})
