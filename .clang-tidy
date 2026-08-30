@@ -20,6 +20,6 @@ Checks: >
 
 WarningsAsErrors: '*'
 
-HeaderFilterRegex: '^(include|src)/.*\.(h|hpp|cpp)$'
+HeaderFilterRegex: '^(include|src|tests)/.*\.(h|hpp|cpp)$'
 
 FormatStyle: file

@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install system dependencies
         run: |
@@ -32,6 +32,11 @@ jobs:
 
       - name: Run quality checks
         run: xmake check
+
+      - name: Verify quality checks did not modify tracked files
+        run: |
+          git diff --exit-code
+          git diff --cached --exit-code
 
       - name: Run app
         run: xmake run app

@@ -57,7 +57,7 @@ xmake check
 ```
 
 此命令依次检查格式、刷新 compilation database、运行 clang-tidy、重新构建并运行单元测试。
-它只验证 tracked 文件，不会修改它们；构建产物仍会写入已忽略的目录。
+它验证受管理的源码文件，但不会修改 tracked 文件；构建产物仍会写入已忽略的目录。
 
 ## 测试
 

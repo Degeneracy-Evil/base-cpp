@@ -13,15 +13,12 @@ local function cpp_files()
     local patterns = {
         "include/**.h",
         "include/**.hpp",
-        "include/**.c",
         "include/**.cpp",
         "src/**.h",
         "src/**.hpp",
-        "src/**.c",
         "src/**.cpp",
         "tests/**.h",
         "tests/**.hpp",
-        "tests/**.c",
         "tests/**.cpp"
     }
     for _, pattern in ipairs(patterns) do
@@ -35,7 +32,7 @@ end
 
 local function translation_units()
     local files = {}
-    for _, pattern in ipairs({"src/**.c", "src/**.cpp", "tests/**.c", "tests/**.cpp"}) do
+    for _, pattern in ipairs({"src/**.cpp", "tests/**.cpp"}) do
         for _, file in ipairs(os.files(pattern)) do
             table.insert(files, file)
         end
