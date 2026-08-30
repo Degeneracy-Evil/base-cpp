@@ -1,59 +1,38 @@
-# base_project
+# base-cpp
 
-个人开源项目基础模板 — C++20 + xmake + Clang/GCC 工具链。
+面向个人 C++ 工程的现代、严格、轻量项目模板，使用 C++23、xmake 和 Clang/GCC。
 
 ## 前置条件
 
-| 工具 | 最低版本 | 说明 |
-|------|---------|------|
-| Clang（默认）或 GCC | Clang 12 / GCC 10 | 支持 C++20 的编译器 |
-| xmake | 2.8 | 构建系统 |
-| lld | — | Clang 使用的链接器（仅 Clang） |
-| libc++ | — | Clang 使用的 C++ 标准库（仅 Clang） |
-| clang-format | — | 代码格式化（随 clang 提供） |
-| clang-tidy | — | 静态分析（随 clang 提供） |
+- 支持 C++23 的 Clang（默认）或 GCC；
+- xmake；
+- clang-format；
+- clang-tidy。
+
+主要验证环境为 Ubuntu 24.04、Clang 和最新版 xmake。GCC 是可选的本地工具链。构建使用所选
+toolchain 在当前环境中的默认 C++ 标准库、链接器和 runtime，不强制绑定 LLVM runtime stack。
 
 doctest 由 xmake/xrepo 在配置或首次运行测试时自动获取。
+
+## 初始化
+
+从 GitHub template 创建仓库或 clone 后，安装本仓库的 Git hook：
+
+```bash
+git config core.hooksPath .githooks
+```
 
 ## 构建
 
 ```bash
-xmake build                           # 使用 Clang 构建（默认工具链）
-xmake f -c -y --toolchain=gcc         # 切换到 GCC
-xmake -r                              # 重新构建
+xmake f -c -y --toolchain=clang    # 配置默认 Clang 工具链
+xmake                              # 构建
+xmake -r                           # 重新构建
+xmake f -c -y --toolchain=gcc      # 切换到 GCC
 ```
 
-Clang 自动启用 libc++、lld、compiler-rt 和 libunwind；GCC 使用系统默认的标准库和链接器。
-
-首次 `xmake build` 会自动配置 git hooks，后续 commit 前会自动修复格式和尾随空白。
-
-`compile_commands.json` 由 xmake 根据真实构建参数自动更新到 `build/`（供 clang-tidy /
-clangd 使用），无需手动生成。
-
-## 质量检查
-
-```bash
-git commit        # 自动修复格式 + 尾随空白 → 提交，零摩擦
-xmake check       # 全量 format + tidy + rebuild + test（发布前 / CI）
-```
-
-日常开发只需 `git commit`，pre-commit hook 会自动对暂存文件运行 clang-format 并清理尾随
-空白和 EOF 换行，修复后自动重新暂存，整个过程无感。
-
-发布前或 CI 中执行 `xmake check`，依次运行 clang-format、clang-tidy、`xmake -r` 和
-`xmake test`，任何一步失败都会返回非零状态。
-
-格式化和静态检查递归扫描 `include/`、`src/`、`tests/` 下的 C/C++ 文件。行尾统一 LF
-（`.gitattributes` 控制）。
-
-## 测试
-
-```bash
-xmake test
-```
-
-测试使用 doctest。C++ 单元测试统一编译为 `unit_tests`。新增测试文件放在 `tests/unit/`；
-测试入口位于 `tests/test_main.cpp`。
+`compile_commands.json` 由 xmake 根据真实构建参数自动更新到 `build/`，供 clang-tidy 和 clangd
+使用。
 
 ## 运行
 
@@ -61,15 +40,54 @@ xmake test
 xmake run app
 ```
 
+xmake 从项目根目录运行程序，因此程序可以直接使用相对于根目录的路径。
+
+## 格式化
+
+```bash
+xmake format
+```
+
+此命令会使用 clang-format 原地修改 `include/`、`src/` 和 `tests/` 中受管理的 C/C++ 文件。
+
+## 完整质量检查
+
+```bash
+xmake check
+```
+
+此命令依次检查格式、刷新 compilation database、运行 clang-tidy、重新构建并运行单元测试。
+它只验证 tracked 文件，不会修改它们；构建产物仍会写入已忽略的目录。
+
+## 测试
+
+```bash
+xmake test
+```
+
+单元测试使用 doctest，入口位于 `tests/test_main.cpp`，测试源码放在 `tests/unit/` 并统一构建为
+`unit_tests` target。
+
+## Git hook
+
+pre-commit hook 快速检查 Git index 中即将提交的 snapshot：
+
+- `git diff --cached --check` 检查 staged whitespace error；
+- clang-format 检查 staged C/C++ 内容。
+
+hook 不读取未暂存的 C/C++ 修改，不修改 working tree，也不调用 `git add`。存在 staged C/C++
+文件但缺少 clang-format 时，commit 会失败并显示安装提示。
+
 ## CI
 
-push 到 `main` 或提交 PR 时，GitHub Actions（ubuntu-24.04）使用 Clang 执行
-`xmake check`，然后运行 `xmake run app` 冒烟测试。xmake 始终使用 latest 版本。
+push 到 `main` 或提交 pull request 时，GitHub Actions 在 Ubuntu 24.04 上使用 Clang 运行
+`xmake check`，随后以 `xmake run app` 做 smoke test。CI 只授予只读 repository contents 权限。
 
-## 技术栈
+## 从模板开始新项目
 
-C++20 / xmake / Clang 或 GCC（Clang 使用 libc++ / lld / compiler-rt / libunwind）
+创建项目后，应按项目需要修改 `set_project` / `set_version`、README、程序源码和测试。仅在具体
+项目确有需要时增加依赖、library target、其他构建系统或额外 CI matrix。
 
 ## 许可证
 
-Apache License 2.0
+[Apache License 2.0](LICENSE)

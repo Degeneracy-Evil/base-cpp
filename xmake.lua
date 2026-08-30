@@ -1,36 +1,54 @@
-set_languages("c++20")
+set_project("base-cpp")
+set_version("0.1.0")
+set_languages("c++23")
 set_rundir(".")
-set_toolchains("clang", "gcc")
+if not get_config("toolchain") then
+    set_toolchains("clang")
+end
 add_rules("plugin.compile_commands.autoupdate", {outputdir = "build"})
 add_requires("doctest 2.4.12")
 
-local function configure_toolchain(target)
-    local compiler = target:tool("cxx")
-    if compiler and compiler:find("clang", 1, true) then
-        target:add("cxxflags", "-stdlib=libc++", {force = true})
-        target:add("ldflags", "-stdlib=libc++", "-fuse-ld=lld", "-rtlib=compiler-rt",
-                   "-unwindlib=libunwind", {force = true})
+local function cpp_files()
+    local files = {}
+    local patterns = {
+        "include/**.h",
+        "include/**.hpp",
+        "include/**.c",
+        "include/**.cpp",
+        "src/**.h",
+        "src/**.hpp",
+        "src/**.c",
+        "src/**.cpp",
+        "tests/**.h",
+        "tests/**.hpp",
+        "tests/**.c",
+        "tests/**.cpp"
+    }
+    for _, pattern in ipairs(patterns) do
+        for _, file in ipairs(os.files(pattern)) do
+            table.insert(files, file)
+        end
     end
+    table.sort(files)
+    return files
+end
+
+local function translation_units()
+    local files = {}
+    for _, pattern in ipairs({"src/**.c", "src/**.cpp", "tests/**.c", "tests/**.cpp"}) do
+        for _, file in ipairs(os.files(pattern)) do
+            table.insert(files, file)
+        end
+    end
+    table.sort(files)
+    return files
 end
 
 target("app")
     set_kind("binary")
     add_files("src/**.cpp")
     add_includedirs("include")
-    add_cxxflags("-Wall", "-Wextra", "-Werror", {force = true})
-
-    on_config(function (target)
-        configure_toolchain(target)
-    end)
-
-    on_load(function (target)
-        if os.isdir(".githooks") and (os.isdir(".git") or os.isfile(".git")) then
-            local configured = try { function() os.execv("git", {"config", "core.hooksPath"}); return true end }
-            if not configured then
-                os.runv("git", {"config", "core.hooksPath", ".githooks"})
-            end
-        end
-    end)
+    add_cxxflags("-Wall", "-Wextra", "-Werror", "-Wpedantic", {force = true})
 
 target("unit_tests")
     set_kind("binary")
@@ -38,11 +56,7 @@ target("unit_tests")
     add_files("tests/test_main.cpp", "tests/unit/**.cpp")
     add_includedirs("include")
     add_packages("doctest")
-    add_cxxflags("-Wall", "-Wextra", "-Werror", "-UNDEBUG", {force = true})
-
-    on_config(function (target)
-        configure_toolchain(target)
-    end)
+    add_cxxflags("-Wall", "-Wextra", "-Werror", "-Wpedantic", "-UNDEBUG", {force = true})
 
 task("test")
     set_category("plugin")
@@ -55,29 +69,45 @@ task("test")
         options = {}
     }
 
+task("format")
+    set_category("plugin")
+    on_run(function ()
+        for _, file in ipairs(cpp_files()) do
+            os.execv("clang-format", {"-i", file})
+        end
+    end)
+    set_menu {
+        usage = "xmake format",
+        description = "Format managed C/C++ files in place",
+        options = {}
+    }
+
 task("check")
     set_category("plugin")
     on_run(function ()
-        local fmt_cmd = "find include src tests -type f \\( -name '*.h' -o -name '*.hpp' -o -name '*.c' -o -name '*.cpp' \\) -print0 2>/dev/null | xargs -0 clang-format -i"
-        local tidy_cmd = "find src tests -type f \\( -name '*.c' -o -name '*.cpp' \\) -print0 2>/dev/null | xargs -0 clang-tidy -p=build"
+        print("[1/5] clang-format check...")
+        for _, file in ipairs(cpp_files()) do
+            os.execv("clang-format", {"--dry-run", "--Werror", file})
+        end
 
-        print("[1/4] clang-format...")
-        os.execv("bash", {"-c", fmt_cmd})
-
-        print("[2/4] clang-tidy...")
+        print("[2/5] compilation database...")
         os.execv("xmake", {"project", "-k", "compile_commands", "build"})
-        os.execv("bash", {"-c", tidy_cmd})
 
-        print("[3/4] rebuild...")
+        print("[3/5] clang-tidy...")
+        for _, file in ipairs(translation_units()) do
+            os.execv("clang-tidy", {"-p=build", file})
+        end
+
+        print("[4/5] rebuild...")
         os.execv("xmake", {"-r"})
 
-        print("[4/4] test...")
+        print("[5/5] test...")
         os.execv("xmake", {"test"})
 
         print("\nAll checks passed.")
     end)
     set_menu {
         usage = "xmake check",
-        description = "Full quality check: format + tidy + rebuild + test",
+        description = "Validate format, tidy, rebuild, and tests without modifying tracked files",
         options = {}
     }
