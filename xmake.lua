@@ -13,7 +13,6 @@ local function cpp_files()
     local patterns = {
         "include/**.h",
         "include/**.hpp",
-        "include/**.cpp",
         "src/**.h",
         "src/**.hpp",
         "src/**.cpp",

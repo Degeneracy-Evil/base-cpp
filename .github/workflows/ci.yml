@@ -27,6 +27,13 @@ jobs:
           actions-cache-folder: .xmake-install
           package-cache: true
 
+      - name: Show tool versions
+        run: |
+          xmake --version
+          clang++ --version
+          clang-format --version
+          clang-tidy --version
+
       - name: Configure
         run: xmake f -c -y --toolchain=clang
 
